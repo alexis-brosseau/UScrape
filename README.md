@@ -1,4 +1,4 @@
-![alt text](https://imgur.com/a/l4z3Vo7)
+![alt text](https://i.imgur.com/fy3326R.png)
 
 ## Context: ##
 Software to scrape data for [BloomingPals](https://github.com/julie-beaucage/Bloomingpals)
