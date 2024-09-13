@@ -1,4 +1,6 @@
-![alt text](https://i.imgur.com/fy3326R.png)
+<p align="center">
+  <img src="https://i.imgur.com/fy3326R.png" />
+</p>
 
 ## Context: ##
 Software to scrape data for [BloomingPals](https://github.com/julie-beaucage/Bloomingpals)
