@@ -5,6 +5,6 @@ Software to scrape data for [BloomingPals](https://github.com/julie-beaucage/Blo
 
 ## How to use: ##
 
-1. Download the lastest [Release](https://github.com/alexis-brosseau/UScrape/releases)
+1. Download the latest [Release](https://github.com/alexis-brosseau/UScrape/releases)
 2. Launch UScrape.exe
 3. Navigate through the menu with **up arrow**, **down arrow** and **enter**
