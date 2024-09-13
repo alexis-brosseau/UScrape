@@ -10,22 +10,18 @@ namespace UScrape
             string header = "╔═════════════════════════════════════════════════════════╗\r\n║██╗   ██╗███████╗ ██████╗██████╗  █████╗ ██████╗ ███████╗║\r\n║██║   ██║██╔════╝██╔════╝██╔══██╗██╔══██╗██╔══██╗██╔════╝║\r\n║██║   ██║███████╗██║     ██████╔╝███████║██████╔╝█████╗  ║\r\n║██║   ██║╚════██║██║     ██╔══██╗██╔══██║██╔═══╝ ██╔══╝  ║\r\n║╚██████╔╝███████║╚██████╗██║  ██║██║  ██║██║     ███████╗║\r\n║ ╚═════╝ ╚══════╝ ╚═════╝╚═╝  ╚═╝╚═╝  ╚═╝╚═╝     ╚══════╝║\r\n╚═════════════════════════════════════════════════════════╝";
             Interface menu = new Interface(header, Enum.Parse<ConsoleColor>(Config.Read("UIColor", "Options")), 0);
             menu.Start();
-            ShowMainMenu(menu);
+            ShowMenu(menu);
         }
 
-        static bool IsColorDark(ConsoleColor color)
-        {
-            return color == ConsoleColor.Black || color == ConsoleColor.DarkBlue || color == ConsoleColor.DarkGreen || color == ConsoleColor.DarkCyan || color == ConsoleColor.DarkRed || color == ConsoleColor.DarkMagenta || color == ConsoleColor.DarkYellow || color == ConsoleColor.Gray;
-        }
-
-        static void ShowMainMenu(Interface menu)
+        // ---------- Menus ----------
+        static void ShowMenu(Interface menu)
         {
             menu.Clear();
             menu.SkipLine(1);
             menu.ShowNavigation(new List<(string, Action)>
             {
-                ("Scrape", () => ShowScrapeMenu(menu)),
-                ("Options", () => ShowOptionsMenu(menu)),
+                ("Scrape", () => ShowScrape(menu)),
+                ("Options", () => ShowOptions(menu)),
                 ("", () => { }),
                 ("Exit", () => {
                     menu.Clear();
@@ -35,109 +31,7 @@ namespace UScrape
             });
         }
 
-        static void SaveToFile(Interface menu, List<ISavable> data, SaveFormat format)
-        {
-            ProgressTracker progress = new ProgressTracker();
-
-            string filepath = Config.Read("OutputFolder", "Options");
-            string filename = DateTime.Now.ToString("yyyy-MM-dd_HH-mm-ss");
-            List<string> rows = new List<string>();
-
-            switch (format)
-            {
-                case SaveFormat.JSON:
-                    filename += ".json";
-                    rows = data.Select(e => e.ToJSON()).ToList();
-                    break;
-
-                case SaveFormat.SQL:
-                    filename += ".sql";
-                    rows = data.Select(e => e.ToSQL("")).ToList();
-                    break;
-            }
-
-            Thread thread = new Thread(() => 
-            {
-                progress.Message = "Saving to file";
-
-                try
-                {
-                    DirectoryInfo dir = new DirectoryInfo(filepath);
-                    dir.Create();
-
-                    FileInfo file = new FileInfo($"{filepath}/{filename}");
-                    file.Directory.Create();
-
-                    StreamWriter writer = new StreamWriter($"{filepath}/{filename}");
-                    for (int i = 0; i < rows.Count(); i++)
-                    {
-                        if (progress.Status == ProgressTracker.Statuses.Aborted)
-                        {
-                            writer.Close();
-                            File.Delete(filename);
-                            return;
-                        }
-
-                        progress.Progression = (double)i / rows.Count;
-                        progress.Data = rows[i];
-
-                        writer.WriteLine(rows[i]);
-                    }
-                    writer.Close();
-                }
-                catch (Exception e)
-                {
-                    progress.Data = e.Message;
-                    progress.Status = ProgressTracker.Statuses.Error;
-                }
-
-                progress.Status = ProgressTracker.Statuses.Completed;
-            });
-
-            progress.OnAbortion(() =>
-            {
-                thread.Join(100);
-                ShowSaveOptions(menu, data);
-            });
-
-            progress.OnCompletion(() =>
-            {
-                FileInfo file = new FileInfo($"{filepath}/{filename}");
-
-                thread.Join(100);
-                menu.Clear();
-                menu.SkipLine(1);
-                menu.WriteLine("Status: Completed");
-                menu.WriteLine($"File saved at {file.FullName}");
-                menu.SkipLine(1);
-                menu.ShowNavigation(new List<(string, Action)>
-                {
-                    ("", () => { }),
-                    ("Back", () => ShowSaveOptions(menu, data)),
-                });
-            });
-
-            thread.Start();
-            ShowProgress(menu, progress, TimeSpan.FromMilliseconds(250));
-        }
-
-        static void ShowSaveOptions(Interface menu, List<ISavable> data)
-        {
-            List<string> a = data.Select(e => e.ToSQL("")).ToList();
-
-            menu.Clear();
-            menu.SkipLine(1);
-            menu.ShowNavigation(new List<(string, Action)>
-            {
-                ("Save to Json", () => SaveToFile(menu, data, SaveFormat.JSON)),
-                ("Save to SQL", () => SaveToFile(menu, data, SaveFormat.SQL)),
-                ("Push to database (Not implemented yet)", () => ShowSaveOptions(menu, data)),
-                ("", () => { }),
-                ("Back", () => ShowScrapeMenu(menu)),
-            });
-        }
-
-        static void ShowScrapeMenu(Interface menu)
+        static void ShowScrape(Interface menu)
         {
             menu.Clear();
             menu.SkipLine(1);
@@ -145,30 +39,8 @@ namespace UScrape
             {
                 ("Scrape Evenko", () => ScrapeEvenko(menu)),
                 ("", () => { }),
-                ("Back", () => ShowMainMenu(menu)),
+                ("Back", () => ShowMenu(menu)),
             });
-        }
-
-        static void ScrapeEvenko(Interface menu)
-        {
-            List<ISavable> result = new List<ISavable>();
-            ProgressTracker progress = new ProgressTracker();
-
-            Thread thread = new Thread(() => {
-                result = Scraper.ScrapeEvenko(progress);
-
-                if (progress.Status == ProgressTracker.Statuses.Completed) 
-                    ShowSaveOptions(menu, result);
-            });
-
-            progress.OnAbortion(() =>
-            {
-                thread.Join(100);
-                ShowScrapeMenu(menu);
-            });
-
-            thread.Start();
-            ShowProgress(menu, progress, TimeSpan.FromMilliseconds(250));
         }
 
         static void ShowProgress(Interface menu, ProgressTracker progress)
@@ -223,26 +95,42 @@ namespace UScrape
             }, interval);
         }
 
-        static void ShowOptionsMenu(Interface menu)
+        static void ShowSaveOptions(Interface menu, List<ISavable> data)
+        {
+            List<string> a = data.Select(e => e.ToSQL("")).ToList();
+
+            menu.Clear();
+            menu.SkipLine(1);
+            menu.ShowNavigation(new List<(string, Action)>
+            {
+                ("Save to Json", () => SaveToFile(menu, data, SaveFormat.JSON)),
+                ("Save to SQL", () => SaveToFile(menu, data, SaveFormat.SQL)),
+                ("Push to database (Not implemented yet)", () => ShowSaveOptions(menu, data)),
+                ("", () => { }),
+                ("Back", () => ShowScrape(menu)),
+            });
+        }
+
+        static void ShowOptions(Interface menu)
         {
             menu.Clear();
             menu.SkipLine(1);
             menu.ShowNavigation(new List<(string, Action)>
             {
-                ("Output folder", () => ShowOutputFolderMenu(menu)),
+                ("Output folder", () => ShowOutputFolder(menu)),
                 ("UI's color", () =>
                 {
                     if (IsColorDark(menu.Color))
-                        ShowDarkColorMenu(menu);
+                        ShowDarkColors(menu);
                     else
-                        ShowLightColorMenu(menu);
+                        ShowLightColors(menu);
                 }),
                 ("", () => { }),
-                ("Back", () => ShowMainMenu(menu)),
+                ("Back", () => ShowMenu(menu)),
             });
         }
 
-        static void ShowOutputFolderMenu(Interface menu)
+        static void ShowOutputFolder(Interface menu)
         {
             menu.Clear();
             menu.SkipLine(1);
@@ -254,15 +142,15 @@ namespace UScrape
                     menu.ReadLine((value) =>
                     {
                         Config.Write("OutputFolder", value, "Options");
-                        ShowOutputFolderMenu(menu);
+                        ShowOutputFolder(menu);
                     });
                 }),
                 ("", () => { }),
-                ("Back", () => ShowOptionsMenu(menu)),
+                ("Back", () => ShowOptions(menu)),
             }); 
         }
 
-        static void ShowLightColorMenu(Interface menu)
+        static void ShowLightColors(Interface menu)
         {
             string mode = IsColorDark(menu.Color) ? "Dark" : "Light";
 
@@ -275,53 +163,53 @@ namespace UScrape
                 {
                     menu.Color = ConsoleColor.Red;
                     Config.Write("UIColor", menu.Color.ToString(), "Options");
-                    ShowLightColorMenu(menu);
+                    ShowLightColors(menu);
                 }),
                 ("Green", () =>
                 {
                     menu.Color = ConsoleColor.Green;
                     Config.Write("UIColor", menu.Color.ToString(), "Options");
-                    ShowLightColorMenu(menu);
+                    ShowLightColors(menu);
                 }),
                 ("Blue", () =>
                 {
                     menu.Color = ConsoleColor.Blue;
                     Config.Write("UIColor", menu.Color.ToString(), "Options");
-                    ShowLightColorMenu(menu);
+                    ShowLightColors(menu);
                 }),
                 ("Yellow", () =>
                 {
                     menu.Color = ConsoleColor.Yellow;
                     Config.Write("UIColor", menu.Color.ToString(), "Options");
-                    ShowLightColorMenu(menu);
+                    ShowLightColors(menu);
                 }),
                 ("Cyan", () =>
                 {
                     menu.Color = ConsoleColor.Cyan;
                     Config.Write("UIColor", menu.Color.ToString(), "Options");
-                    ShowLightColorMenu(menu);
+                    ShowLightColors(menu);
                 }),
                 ("Magenta", () =>
                 {
                     menu.Color = ConsoleColor.Magenta;
                     Config.Write("UIColor", menu.Color.ToString(), "Options");
-                    ShowLightColorMenu(menu);
+                    ShowLightColors(menu);
                 }),
                 ("White", () =>
                 {
                     menu.Color = ConsoleColor.White;
                     Config.Write("UIColor", menu.Color.ToString(), "Options");
-                    ShowLightColorMenu(menu);
+                    ShowLightColors(menu);
                 }),
                 ("", () => { }),
-                ("See dark colors", () => ShowDarkColorMenu(menu)),
+                ("See dark colors", () => ShowDarkColors(menu)),
                 ("Back", () => {
-                    ShowOptionsMenu(menu);
+                    ShowOptions(menu);
                 }),
             });
         }
 
-        static void ShowDarkColorMenu(Interface menu)
+        static void ShowDarkColors(Interface menu)
         {
             string mode = IsColorDark(menu.Color) ? "Dark" : "Light";
 
@@ -334,50 +222,164 @@ namespace UScrape
                 {
                     menu.Color = ConsoleColor.DarkRed;
                     Config.Write("UIColor", menu.Color.ToString(), "Options");
-                    ShowDarkColorMenu(menu);
+                    ShowDarkColors(menu);
                 }),
                 ("DarkGreen", () =>
                 {
                     menu.Color = ConsoleColor.DarkGreen;
                     Config.Write("UIColor", menu.Color.ToString(), "Options");
-                    ShowDarkColorMenu(menu);
+                    ShowDarkColors(menu);
                 }),
                 ("DarkBlue", () =>
                 {
                     menu.Color = ConsoleColor.DarkBlue;
                     Config.Write("UIColor", menu.Color.ToString(), "Options");
-                    ShowDarkColorMenu(menu);
+                    ShowDarkColors(menu);
                 }),
                 ("DarkYellow", () =>
                 {
                     menu.Color = ConsoleColor.DarkYellow;
                     Config.Write("UIColor", menu.Color.ToString(), "Options");
-                    ShowDarkColorMenu(menu);
+                    ShowDarkColors(menu);
                 }),
                 ("DarkCyan", () =>
                 {
                     menu.Color = ConsoleColor.DarkCyan;
                     Config.Write("UIColor", menu.Color.ToString(), "Options");
-                    ShowDarkColorMenu(menu);
+                    ShowDarkColors(menu);
                 }),
                 ("DarkMagenta", () =>
                 {
                     menu.Color = ConsoleColor.DarkMagenta;
                     Config.Write("UIColor", menu.Color.ToString(), "Options");
-                    ShowDarkColorMenu(menu);
+                    ShowDarkColors(menu);
                 }),
                 ("Gray", () =>
                 {
                     menu.Color = ConsoleColor.Gray;
                     Config.Write("UIColor", menu.Color.ToString(), "Options");
-                    ShowDarkColorMenu(menu);
+                    ShowDarkColors(menu);
                 }),
                 ("", () => { }),
-                ("See light colors", () => ShowLightColorMenu(menu)),
+                ("See light colors", () => ShowLightColors(menu)),
                 ("Back", () => {
-                    ShowOptionsMenu(menu);
+                    ShowOptions(menu);
                 }),
             });
+        }
+
+        // ---------- Scraping ----------
+        static void ScrapeEvenko(Interface menu)
+        {
+            List<ISavable> result = new List<ISavable>();
+            ProgressTracker progress = new ProgressTracker();
+
+            Thread thread = new Thread(() => {
+                result = Scraper.ScrapeEvenko(progress);
+
+                if (progress.Status == ProgressTracker.Statuses.Completed)
+                    ShowSaveOptions(menu, result);
+            });
+
+            progress.OnAbortion(() =>
+            {
+                thread.Join(100);
+                ShowScrape(menu);
+            });
+
+            thread.Start();
+            ShowProgress(menu, progress, TimeSpan.FromMilliseconds(250));
+        }
+
+        // ---------- Utils ----------
+        static void SaveToFile(Interface menu, List<ISavable> data, SaveFormat format)
+        {
+            ProgressTracker progress = new ProgressTracker();
+
+            string filepath = Config.Read("OutputFolder", "Options");
+            string filename = DateTime.Now.ToString("yyyy-MM-dd_HH-mm-ss");
+            List<string> rows = new List<string>();
+
+            switch (format)
+            {
+                case SaveFormat.JSON:
+                    filename += ".json";
+                    rows = data.Select(e => e.ToJSON()).ToList();
+                    break;
+
+                case SaveFormat.SQL:
+                    filename += ".sql";
+                    rows = data.Select(e => e.ToSQL("")).ToList();
+                    break;
+            }
+
+            Thread thread = new Thread(() =>
+            {
+                progress.Message = "Saving to file";
+
+                try
+                {
+                    DirectoryInfo dir = new DirectoryInfo(filepath);
+                    dir.Create();
+
+                    FileInfo file = new FileInfo($"{filepath}/{filename}");
+                    file.Directory.Create();
+
+                    StreamWriter writer = new StreamWriter($"{filepath}/{filename}");
+                    for (int i = 0; i < rows.Count(); i++)
+                    {
+                        if (progress.Status == ProgressTracker.Statuses.Aborted)
+                        {
+                            writer.Close();
+                            File.Delete(filename);
+                            return;
+                        }
+
+                        progress.Progression = (double)i / rows.Count;
+                        progress.Data = rows[i];
+
+                        writer.WriteLine(rows[i]);
+                    }
+                    writer.Close();
+                    progress.Status = ProgressTracker.Statuses.Completed;
+                }
+                catch (Exception e)
+                {
+                    progress.Data = e.Message;
+                    progress.Status = ProgressTracker.Statuses.Error;
+                }
+            });
+
+            progress.OnAbortion(() =>
+            {
+                thread.Join(100);
+                ShowSaveOptions(menu, data);
+            });
+
+            progress.OnCompletion(() =>
+            {
+                FileInfo file = new FileInfo($"{filepath}/{filename}");
+
+                thread.Join(100);
+                menu.Clear();
+                menu.SkipLine(1);
+                menu.WriteLine("Status: Completed");
+                menu.WriteLine($"File saved at {file.FullName}");
+                menu.SkipLine(1);
+                menu.ShowNavigation(new List<(string, Action)>
+                {
+                    ("", () => { }),
+                    ("Back", () => ShowSaveOptions(menu, data)),
+                });
+            });
+
+            thread.Start();
+            ShowProgress(menu, progress, TimeSpan.FromMilliseconds(250));
+        }
+
+        static bool IsColorDark(ConsoleColor color)
+        {
+            return color == ConsoleColor.Black || color == ConsoleColor.DarkBlue || color == ConsoleColor.DarkGreen || color == ConsoleColor.DarkCyan || color == ConsoleColor.DarkRed || color == ConsoleColor.DarkMagenta || color == ConsoleColor.DarkYellow || color == ConsoleColor.Gray;
         }
     }
 }
