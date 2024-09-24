@@ -309,7 +309,7 @@ namespace UScrape
 
                 case SaveFormat.SQL:
                     filename += ".sql";
-                    rows = data.Select(e => e.ToSQL("")).ToList();
+                    rows = data.Select(e => e.ToSQL("evenement")).ToList();
                     break;
             }
 
