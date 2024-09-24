@@ -97,7 +97,7 @@ namespace UScrape
 
         static void ShowSaveOptions(Interface menu, List<ISavable> data)
         {
-            List<string> a = data.Select(e => e.ToSQL("")).ToList();
+            List<string> a = data.Select(e => e.ToSQL("evenement")).ToList();
 
             menu.Clear();
             menu.SkipLine(1);
