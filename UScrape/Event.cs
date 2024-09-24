@@ -37,7 +37,7 @@ namespace UScrape
 
         public string ToSQL(string table)
         {
-            string sqlString = $"INSERT INTO {table} (nom, description, ville, adresse, date, prix, image) VALUES ('{Name}', '{Description}', '{City}', '{Adress}', '{Date}', '{Price}', '{Image}');";
+            string sqlString = $"INSERT INTO {table} (nom, description, ville, adresse, date, prix, image) VALUES ('{Name.Replace("'", "''")}', '{Description.Replace("'", "''")}', '{City.Replace("'", "''")}', '{Adress.Replace("'", "''")}', '{Date}', '{Price.Replace("'", "''")}', '{Image.Replace("'", "''")}');";
             return sqlString;
         }
     }
