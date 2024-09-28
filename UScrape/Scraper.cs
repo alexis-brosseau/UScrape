@@ -68,13 +68,14 @@ namespace UScrape
                     // Modelize event
                     string name = jsonEvents[i]["title"].GetValue<string>();
                     string description = "";
+                    string category = jsonEvents[i]["category"][0].GetValue<string>();
                     string city = venue["city"].GetValue<string>();
                     string adress = adresses[venueId];
                     DateTime date = showTime;
                     string price = "Paid";
                     string image = jsonEvents[i]["thumbnail"].GetValue<string>();
 
-                    Event @event = new Event(name, description, city, adress, date, price, image);
+                    Event @event = new Event(name, description, category,  city, adress, date, price, image);
                     events.Add(@event);
                     progress.Data = @event.ToJSON();
                 } catch (Exception e)
