@@ -33,7 +33,7 @@ namespace UScrape
 
             progress.Message = "Parsing data";
             JsonArray jsonEvents = data["hits"].AsArray();
-            List<string> categories = new List<string>(); 
+            List<string> genres = new List<string>(); 
 
             for(int i = 0; i < jsonEvents.Count; i++)
             {
@@ -76,7 +76,6 @@ namespace UScrape
                     DateTime date = showTime;
                     string price = "Paid";
                     string image = jsonEvents[i]["thumbnail"].GetValue<string>();
-                    categories.Add(category);
                     Event @event = new Event(name, description, category, city, adress, date, price, image);
                     events.Add(@event);
                     progress.Data = @event.ToJSON();
