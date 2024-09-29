@@ -37,9 +37,9 @@ namespace UScrape
             return jsonString;
         }
 
-        public string ToSQL(string table)
+        public string ToSQL(string procedure)
         {
-            string sqlString = $"INSERT INTO {table} (nom, description, category, ville, adresse, date, prix, image) VALUES ('{Name.Replace("'", "''")}', '{Description.Replace("'", "''")}', '{Category.Replace("'", "''")}', '{City.Replace("'", "''")}', '{Adress.Replace("'", "''")}', '{Date}', '{Price.Replace("'", "''")}', '{Image.Replace("'", "''")}');";
+            string sqlString = $"CALL {procedure} ('{Name.Replace("'", "''")}', '{Description.Replace("'", "''")}', '{Category.Replace("'", "''")}', '{City.Replace("'", "''")}', '{Adress.Replace("'", "''")}', '{Date}', '{Price.Replace("'", "''")}', '{Image.Replace("'", "''")}');";
             return sqlString;
         }
     }

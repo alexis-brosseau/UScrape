@@ -23,19 +23,19 @@ namespace UScrape
             Path = new FileInfo(IniPath).FullName;
         }
 
-        public string Read(string Key, string Section)
+        public string Read(string Section, string Key)
         {
             var RetVal = new StringBuilder(255);
             GetPrivateProfileString(Section, Key, "", RetVal, 255, Path);
             return RetVal.ToString();
         }
 
-        public void Write(string Key, string Value, string Section)
+        public void Write(string Section, string Key, string Value)
         {
             WritePrivateProfileString(Section, Key, Value, Path);
         }
 
-        public bool KeyExists(string Key, string Section)
+        public bool KeyExists(string Section, string Key)
         {
             return Read(Key, Section).Length > 0;
         }

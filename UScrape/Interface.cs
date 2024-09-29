@@ -192,11 +192,11 @@ namespace UScrape
                     break;
 
                 case Instruction.Types.ColorWrite:
-                    ExecuteColorWrite(((Instruction<string>)instruction).Data);
+                    ExecuteColorWrite(((Instruction<(string, ConsoleColor)>)instruction).Data.Item1, ((Instruction<(string, ConsoleColor)>)instruction).Data.Item2);
                     break;
 
                 case Instruction.Types.ColorWriteLine:
-                    ExecuteColorWriteLine(((Instruction<string>)instruction).Data);
+                    ExecuteColorWriteLine(((Instruction<(string, ConsoleColor)>)instruction).Data.Item1, ((Instruction<(string, ConsoleColor)>)instruction).Data.Item2);
                     break;
 
                 case Instruction.Types.SkipLine:
@@ -221,7 +221,7 @@ namespace UScrape
         {
             Console.Clear();
             Console.SetCursorPosition(0, 0);
-            ExecuteColorWriteLine(Header);
+            ExecuteColorWriteLine(Header, Color);
         }
 
         private void ExecuteWrite(string value)
@@ -234,16 +234,16 @@ namespace UScrape
             Console.WriteLine(value);
         }
 
-        private void ExecuteColorWrite(string value)
+        private void ExecuteColorWrite(string value, ConsoleColor color)
         {
-            Console.ForegroundColor = Color;
+            Console.ForegroundColor = color;
             Console.Write(value);
             Console.ResetColor();
         }
 
-        private void ExecuteColorWriteLine(string value)
+        private void ExecuteColorWriteLine(string value, ConsoleColor color)
         {
-            Console.ForegroundColor = Color;
+            Console.ForegroundColor = color;
             Console.WriteLine(value);
             Console.ResetColor();
         }
@@ -282,7 +282,7 @@ namespace UScrape
                     link = link.Insert(0, "\n");
 
                 if (links[i].Item1 == "")
-                    ExecuteColorWrite(link);
+                    ExecuteColorWrite(link, Color);
                 else
                     Console.Write(link);
             }
@@ -297,7 +297,7 @@ namespace UScrape
                     continue;
 
                 Console.SetCursorPosition(0, navigationTop + i);
-                ExecuteColorWrite(">");
+                ExecuteColorWrite(">", Color);
 
                 // Set the cursor at the begginning of the line
                 Console.SetCursorPosition(0, navigationTop + i);
@@ -331,7 +331,7 @@ namespace UScrape
 
                             // Rewrite selector
                             Console.SetCursorPosition(0, newCursorTop);
-                            ExecuteColorWrite(">");
+                            ExecuteColorWrite(">", Color);
 
                             // Set the cursor at the begginning of the line
                             Console.SetCursorPosition(0, newCursorTop);
@@ -353,7 +353,7 @@ namespace UScrape
 
                             // Rewrite selector
                             Console.SetCursorPosition(0, newCursorTop);
-                            ExecuteColorWrite(">");
+                            ExecuteColorWrite(">", Color);
 
                             // Set the cursor at the begginning of the line
                             Console.SetCursorPosition(0, newCursorTop);
@@ -392,14 +392,14 @@ namespace UScrape
             AddInstruction(new Instruction<string>(Instruction.Types.WriteLine, value));
         }
 
-        public void ColorWrite(string value)
+        public void ColorWrite(string value, ConsoleColor color)
         {
-            AddInstruction(new Instruction<string>(Instruction.Types.ColorWrite, value));
+            AddInstruction(new Instruction<(string, ConsoleColor)>(Instruction.Types.ColorWrite, (value, color)));
         }
 
-        public void ColorWriteLine(string value)
+        public void ColorWriteLine(string value, ConsoleColor color)
         {
-            AddInstruction(new Instruction<string>(Instruction.Types.ColorWriteLine, value));
+            AddInstruction(new Instruction<(string, ConsoleColor)>(Instruction.Types.ColorWriteLine, (value, color)));
         }
 
         public void SkipLine(int count = 1)
