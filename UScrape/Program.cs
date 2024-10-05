@@ -103,15 +103,13 @@ namespace UScrape
 
         static void ShowSaveOptions(Interface ui, List<ISavable> data)
         {
-            List<string> a = data.Select(e => e.ToSQL("evenement")).ToList();
-
             ui.Clear();
             ui.SkipLine(1);
             ui.ShowNavigation(new List<(string, Action)>
             {
                 ("Save in Json", () => SaveData(ui, data, SaveFormat.JSON)),
                 ("Save in SQL", () => SaveData(ui, data, SaveFormat.SQL)),
-                ("Push to database", () => PushData(ui, data, "ajouterEvenement")),
+                ("Push to database", () => PushData(ui, data)),
                 ("", () => { }),
                 ("Back", () => ShowMenu(ui)),
             });
@@ -315,7 +313,7 @@ namespace UScrape
 
                 case SaveFormat.SQL:
                     filename += ".sql";
-                    rows = data.Select(e => e.ToSQL("ajouterEvenement")).ToList();
+                    rows = data.Select(e => e.ToSQL()).ToList();
                     break;
             }
 
@@ -383,7 +381,7 @@ namespace UScrape
             ShowProgress(ui, progress, TimeSpan.FromMilliseconds(250));
         }
 
-        static void PushData(Interface ui, List<ISavable> data, string procedure)
+        static void PushData(Interface ui, List<ISavable> data)
         {
             ProgressTracker progress = new ProgressTracker();
             MySqlConnection connection = new MySqlConnection(DB.ConnectionString);
@@ -401,8 +399,8 @@ namespace UScrape
                             return;
 
                         progress.Progression = (double)i / data.Count;
-                        progress.Data = data[i].ToSQL(procedure);
-                        builder.Append(data[i].ToSQL(procedure));
+                        progress.Data = data[i].ToSQL();
+                        builder.Append(data[i].ToSQL());
                     }
 
                     progress.Message = "Executing query";

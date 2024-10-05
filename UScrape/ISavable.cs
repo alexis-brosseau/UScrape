@@ -15,6 +15,6 @@ namespace UScrape
     public interface ISavable
     {
         public string ToJSON();
-        public string ToSQL(string table);
+        public string ToSQL();
     }
 }

@@ -37,9 +37,9 @@ namespace UScrape
             return jsonString;
         }
 
-        public string ToSQL(string procedure)
+        public string ToSQL()
         {
-            string sqlString = $"CALL {procedure} ('{Name.Replace("'", "''")}', '{Description.Replace("'", "''")}', '{Category.Replace("'", "''")}', '{City.Replace("'", "''")}', '{Adress.Replace("'", "''")}', '{Date}', '{Price.Replace("'", "''")}', '{Image.Replace("'", "''")}');";
+            string sqlString = $"CALL ajouterEvenement ('{Name.Replace("'", "''")}', '{Description.Replace("'", "''")}', '{Category.Replace("'", "''")}', '{City.Replace("'", "''")}', '{Adress.Replace("'", "''")}', '{Date}', '{Price.Replace("'", "''")}', '{Image.Replace("'", "''")}');";
             return sqlString;
         }
     }
